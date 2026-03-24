@@ -45,6 +45,21 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
+	public void enterVariable(ICSSParser.VariableContext ctx) {
+		System.out.println("Enter Variable");
+		VariableAssignment variable = new VariableAssignment();
+		variable.addChild(new VariableReference(ctx.CAPITAL_IDENT().getText()));
+		currentContainer.peek().addChild(variable);
+		currentContainer.push(variable);
+	}
+
+	@Override
+	public void exitVariable(ICSSParser.VariableContext ctx) {
+		System.out.println("Exit Variable");
+		currentContainer.pop();
+	}
+
+	@Override
 	public void enterRuleset(ICSSParser.RulesetContext ctx) {
 		System.out.println("Enter Ruleset");
 		Stylerule stylerule = new Stylerule();
@@ -87,6 +102,21 @@ public class ASTListener extends ICSSBaseListener {
 	}
 
 	@Override
+	public void enterAssignmentValue(ICSSParser.AssignmentValueContext ctx) {
+		System.out.println("Enter AssignmentValue");
+
+		if (ctx.CAPITAL_IDENT() != null) {
+			VariableReference ref = new VariableReference(ctx.CAPITAL_IDENT().getText());
+			currentContainer.peek().addChild(ref);
+		}
+	}
+
+	@Override
+	public void exitAssignmentValue(ICSSParser.AssignmentValueContext ctx) {
+		System.out.println("Exit AssignmentValue");
+	}
+
+	@Override
 	public void enterValue(ICSSParser.ValueContext ctx) {
 		System.out.println("Enter Value");
 		Literal value = createLiteral(ctx);
@@ -119,6 +149,10 @@ public class ASTListener extends ICSSBaseListener {
 				return new ColorLiteral(ctx.COLOR().getText());
 			case ICSSParser.PIXELSIZE:
 				return new PixelLiteral(ctx.PIXELSIZE().getText());
+			case ICSSParser.TRUE:
+				return new BoolLiteral(ctx.TRUE().getText());
+			case ICSSParser.FALSE:
+				return new BoolLiteral(ctx.FALSE().getText());
 			default:
 				throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
 		}

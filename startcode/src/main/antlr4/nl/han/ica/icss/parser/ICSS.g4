@@ -45,7 +45,9 @@ ASSIGNMENT_OPERATOR: ':=';
 
 
 //--- PARSER: ---
-stylesheet: ruleset* EOF;
+stylesheet: variable* ruleset* EOF;
+
+variable: CAPITAL_IDENT ASSIGNMENT_OPERATOR value SEMICOLON;
 
 ruleset: selector OPEN_BRACE declaration* CLOSE_BRACE;
 
@@ -54,9 +56,15 @@ selector
     | ID_IDENT
     | CLASS_IDENT;
 
-declaration: LOWER_IDENT COLON value SEMICOLON;
+declaration: LOWER_IDENT COLON assignmentValue SEMICOLON;
+
+assignmentValue
+    : CAPITAL_IDENT
+    | value;
 
 value
     : COLOR
-    | PIXELSIZE;
+    | PIXELSIZE
+    | TRUE
+    | FALSE;
 
