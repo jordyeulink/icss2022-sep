@@ -28,6 +28,7 @@ public class ASTListener extends ICSSBaseListener {
 	public ASTListener() {
 		ast = new AST();
 		currentContainer = new HanStack<>();
+		currentContainer.push(ast.root);
 	}
     public AST getAST() {
         return ast;
@@ -46,40 +47,80 @@ public class ASTListener extends ICSSBaseListener {
 	@Override
 	public void enterRuleset(ICSSParser.RulesetContext ctx) {
 		System.out.println("Enter Ruleset");
+		Stylerule stylerule = new Stylerule();
+		currentContainer.peek().addChild(stylerule);
+		currentContainer.push(stylerule);
 	}
 
 	@Override
 	public void exitRuleset(ICSSParser.RulesetContext ctx) {
 		System.out.println("Exit Ruleset");
+		currentContainer.pop();
 	}
 
 	@Override
 	public void enterSelector(ICSSParser.SelectorContext ctx) {
 		System.out.println("Enter Selector");
+		Selector selector = createSelector(ctx);
+		currentContainer.peek().addChild(selector);
+		currentContainer.push(selector);
 	}
 
 	@Override
 	public void exitSelector(ICSSParser.SelectorContext ctx) {
 		System.out.println("Exit Selector");
+		currentContainer.pop();
 	}
 
 	@Override
 	public void enterDeclaration(ICSSParser.DeclarationContext ctx) {
 		System.out.println("Enter Declaration");
+		Declaration declaration = new Declaration(ctx.LOWER_IDENT().getText());
+		currentContainer.peek().addChild(declaration);
+		currentContainer.push(declaration);
 	}
 
 	@Override
 	public void exitDeclaration(ICSSParser.DeclarationContext ctx) {
 		System.out.println("Exit Declaration");
+		currentContainer.pop();
 	}
 
 	@Override
 	public void enterValue(ICSSParser.ValueContext ctx) {
 		System.out.println("Enter Value");
+		Literal value = createLiteral(ctx);
+		currentContainer.peek().addChild(value);
+		currentContainer.push(value);
 	}
 
 	@Override
 	public void exitValue(ICSSParser.ValueContext ctx) {
 		System.out.println("Exit Value");
+		currentContainer.pop();
+	}
+
+	private Selector createSelector(ICSSParser.SelectorContext ctx) {
+		switch (ctx.getStart().getType()) {
+			case ICSSParser.ID_IDENT:
+				return new IdSelector(ctx.ID_IDENT().getText());
+			case ICSSParser.CLASS_IDENT:
+				return new ClassSelector(ctx.CLASS_IDENT().getText());
+			case ICSSParser.LOWER_IDENT:
+				return new TagSelector(ctx.LOWER_IDENT().getText());
+			default:
+				throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
+		}
+	}
+
+	private Literal createLiteral(ICSSParser.ValueContext ctx) {
+		switch (ctx.getStart().getType()) {
+			case ICSSParser.COLOR:
+				return new ColorLiteral(ctx.COLOR().getText());
+			case ICSSParser.PIXELSIZE:
+				return new PixelLiteral(ctx.PIXELSIZE().getText());
+			default:
+				throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
+		}
 	}
 }
