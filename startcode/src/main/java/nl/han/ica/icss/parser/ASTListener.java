@@ -115,6 +115,65 @@ public class ASTListener extends ICSSBaseListener {
 	public void exitAssignmentValue(ICSSParser.AssignmentValueContext ctx) {
 		System.out.println("Exit AssignmentValue");
 	}
+/*
+	@Override
+	public void enterCalculation(ICSSParser.CalculationContext ctx) {
+		System.out.println("Enter Calculation");
+	}
+
+	@Override
+	public void exitCalculation(ICSSParser.CalculationContext ctx) {
+		System.out.println("Exit Calculation");
+		currentContainer.pop();
+	}
+
+	@Override
+	public void enterAdditionExpr(ICSSParser.AdditionExprContext ctx) {
+		System.out.println("Enter AdditionExpr");
+	}
+
+	@Override
+	public void exitAdditionExpr(ICSSParser.AdditionExprContext ctx) {
+		System.out.println("Exit AdditionExpr");
+		currentContainer.pop();
+	}
+
+	@Override
+	public void enterMultiplicationExpr(ICSSParser.MultiplicationExprContext ctx) {
+		System.out.println("Enter MultiplicationExpr");
+	}
+
+	@Override
+	public void exitMultiplicationExpr(ICSSParser.MultiplicationExprContext ctx) {
+		System.out.println("Exit MultiplicationExpr");
+		currentContainer.pop();
+	}
+
+	@Override
+	public void enterPrimary(ICSSParser.PrimaryContext ctx) {
+		System.out.println("Enter Primary");
+	}
+
+	@Override
+	public void exitPrimary(ICSSParser.PrimaryContext ctx) {
+		System.out.println("Exit Primary");
+		currentContainer.pop();
+	}
+
+	@Override
+	public void enterCalculationValue(ICSSParser.CalculationValueContext ctx) {
+		System.out.println("Enter CalculationValue");
+		ASTNode calculationValue = createCalculationValue(ctx);
+		currentContainer.peek().addChild(calculationValue);
+		currentContainer.push(calculationValue);
+	}
+
+	@Override
+	public void exitCalculationValue(ICSSParser.CalculationValueContext ctx) {
+		System.out.println("Exit CalculationValue");
+		currentContainer.pop();
+	}
+*/
 
 	@Override
 	public void enterValue(ICSSParser.ValueContext ctx) {
@@ -153,6 +212,19 @@ public class ASTListener extends ICSSBaseListener {
 				return new BoolLiteral(ctx.TRUE().getText());
 			case ICSSParser.FALSE:
 				return new BoolLiteral(ctx.FALSE().getText());
+			default:
+				throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
+		}
+	}
+
+	private ASTNode createCalculationValue(ICSSParser.CalculationValueContext ctx) {
+		switch (ctx.getStart().getType()) {
+			case ICSSParser.CAPITAL_IDENT:
+				return new VariableReference(ctx.CAPITAL_IDENT().getText());
+			case ICSSParser.PIXELSIZE:
+				return new PixelLiteral(ctx.PIXELSIZE().getText());
+			case ICSSParser.SCALAR:
+				return new ScalarLiteral(ctx.SCALAR().getText());
 			default:
 				throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
 		}
