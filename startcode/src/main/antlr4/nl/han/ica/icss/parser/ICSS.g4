@@ -49,7 +49,7 @@ stylesheet: variable* ruleset* EOF;
 
 variable: CAPITAL_IDENT ASSIGNMENT_OPERATOR value SEMICOLON;
 
-ruleset: selector OPEN_BRACE declaration* CLOSE_BRACE;
+ruleset: selector OPEN_BRACE (declaration | ifClause)* CLOSE_BRACE;
 
 selector
     : LOWER_IDENT
@@ -57,6 +57,10 @@ selector
     | CLASS_IDENT;
 
 declaration: LOWER_IDENT COLON assignmentValue SEMICOLON;
+
+ifClause : IF BOX_BRACKET_OPEN booleanType BOX_BRACKET_CLOSE OPEN_BRACE (declaration | ifClause)* CLOSE_BRACE (elseClause)?;
+
+elseClause : ELSE OPEN_BRACE (declaration | ifClause)* CLOSE_BRACE;
 
 assignmentValue
     : value
@@ -78,6 +82,10 @@ additionOperator
     : PLUS
     | MIN;
 
+booleanType
+    : TRUE
+    | FALSE
+    | CAPITAL_IDENT;
 
 value
     : COLOR

@@ -103,6 +103,34 @@ public class ASTListener extends ICSSBaseListener {
     }
 
     @Override
+    public void enterIfClause(ICSSParser.IfClauseContext ctx) {
+        System.out.println("Enter IfClause");
+        IfClause ifClause = new IfClause();
+        currentContainer.peek().addChild(ifClause);
+        currentContainer.push(ifClause);
+    }
+
+    @Override
+    public void exitIfClause(ICSSParser.IfClauseContext ctx) {
+        System.out.println("Exit IfClause");
+        currentContainer.pop();
+    }
+
+    @Override
+    public void enterElseClause(ICSSParser.ElseClauseContext ctx) {
+        System.out.println("Enter ElseClause");
+        ElseClause elseClause = new ElseClause();
+        currentContainer.peek().addChild(elseClause);
+        currentContainer.push(elseClause);
+    }
+
+    @Override
+    public void exitElseClause(ICSSParser.ElseClauseContext ctx) {
+        System.out.println("Exit IfClause");
+        currentContainer.pop();
+    }
+
+    @Override
     public void enterAssignmentValue(ICSSParser.AssignmentValueContext ctx) {
         System.out.println("Enter AssignmentValue");
 
@@ -198,6 +226,19 @@ public class ASTListener extends ICSSBaseListener {
     @Override
     public void exitAdditionOperator(ICSSParser.AdditionOperatorContext ctx) {
         System.out.println("Exit AdditionOperator");
+    }
+
+    @Override
+    public void enterBooleanType(ICSSParser.BooleanTypeContext ctx) {
+        System.out.println("Exit BooleanType");
+        if(ctx.getStart().getType() == ICSSParser.CAPITAL_IDENT) {
+            currentContainer.peek().addChild(new VariableReference(ctx.CAPITAL_IDENT().getText()));
+        }
+    }
+
+    @Override
+    public void exitBooleanType(ICSSParser.BooleanTypeContext ctx) {
+        System.out.println("Exit BooleanType");
     }
 
 
