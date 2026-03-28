@@ -138,6 +138,9 @@ public class ASTListener extends ICSSBaseListener {
     @Override
     public void exitMultiplicationExpr(ICSSParser.MultiplicationExprContext ctx) {
         System.out.println("Exit MultiplicationExpr");
+        if (currentContainer.peek() instanceof Operation) {
+            currentContainer.pop();
+        }
     }
 
     @Override
@@ -160,7 +163,13 @@ public class ASTListener extends ICSSBaseListener {
     public void enterMultiplicationOperator(ICSSParser.MultiplicationOperatorContext ctx) {
         System.out.println("Enter MultiplicationOperator");
         MultiplyOperation operation = new MultiplyOperation();
-        ASTNode firstValue = currentContainer.pop();
+        ASTNode firstValue;
+        if(currentContainer.peek() instanceof AddOperation){
+            firstValue = ((Operation) currentContainer.peek()).rhs;
+            ((Operation) currentContainer.peek()).rhs = operation;
+        } else {
+            firstValue =currentContainer.pop();
+        }
         operation.addChild(firstValue);
         currentContainer.peek().addChild(operation);
         currentContainer.push(operation);
