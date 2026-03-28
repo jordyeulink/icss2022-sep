@@ -59,22 +59,25 @@ selector
 declaration: LOWER_IDENT COLON assignmentValue SEMICOLON;
 
 assignmentValue
-    : calculation
-    | value
-    | CAPITAL_IDENT;
+    : value
+    | CAPITAL_IDENT
+    | additionExpr;
 
-calculation: additionExpr;
+additionExpr: multiplicationExpr (additionOperator multiplicationExpr)*;
 
-additionExpr: multiplicationExpr ((PLUS | MIN) multiplicationExpr)*;
-
-multiplicationExpr: primary ((MUL) primary)*;
-
-primary: calculationValue;
+multiplicationExpr: calculationValue ((multiplicationOperator) calculationValue)*;
 
 calculationValue
     : CAPITAL_IDENT
     | PIXELSIZE
     | SCALAR;
+
+multiplicationOperator: MUL;
+
+additionOperator
+    : PLUS
+    | MIN;
+
 
 value
     : COLOR
