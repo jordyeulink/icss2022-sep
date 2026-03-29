@@ -7,6 +7,8 @@ import nl.han.ica.icss.ast.literals.BoolLiteral;
 import nl.han.ica.icss.ast.literals.ColorLiteral;
 import nl.han.ica.icss.ast.literals.PixelLiteral;
 import nl.han.ica.icss.ast.literals.ScalarLiteral;
+import nl.han.ica.icss.ast.operations.AddOperation;
+import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.types.ExpressionType;
 
 import java.util.HashMap;
@@ -44,7 +46,7 @@ public class Checker {
             if(child instanceof Declaration){
                 checkDeclaration((Declaration) child);
             }
-            else if(child instanceof Stylerule){
+            else if(child instanceof IfClause){
                 checkIfClause((IfClause) child);
             }
 
@@ -52,6 +54,7 @@ public class Checker {
     }
 
     public void checkDeclaration(Declaration node){
+        
         for(ASTNode child : node.getChildren()){
             if(child instanceof VariableReference){
                 checkVariableReference((VariableReference) child);
@@ -59,7 +62,30 @@ public class Checker {
             else if(child instanceof PropertyName){
                 checkPropertyName((PropertyName) child);
             }
+            else if(child instanceof Operation){
+                checkOperation((Operation)child);
+            }
 
+        }
+    }
+
+    private void checkOperation(Operation node) {
+        if(getExpressionType(node.lhs) == ExpressionType.COLOR && getExpressionType(node.rhs) == ExpressionType.COLOR){
+            node.setError("Color not allowed");
+        }
+        if(node instanceof MultiplyOperation){
+            if(getExpressionType(node.lhs) != ExpressionType.SCALAR && getExpressionType(node.rhs) != ExpressionType.SCALAR){
+                node.setError("No scalar found in multiplication");
+            }
+        } else if (node instanceof AddOperation) {
+            for(ASTNode child : node.getChildren()){
+                if(child instanceof MultiplyOperation) {
+                    checkOperation((Operation) child);
+                }
+            }
+            if(getExpressionType(node.lhs) != getExpressionType(node.rhs)){
+                node.setError("Different types in Calculation");
+            }
         }
     }
 
@@ -74,7 +100,11 @@ public class Checker {
     }
 
     public void checkIfClause(IfClause node){
-
+        if((node.conditionalExpression instanceof VariableReference
+                && variableTypes.getFirst().get(((VariableReference) node.conditionalExpression).name) != ExpressionType.BOOL)
+                || (!(node.conditionalExpression instanceof VariableReference) && getExpressionType(node.conditionalExpression) != ExpressionType.BOOL)){
+            node.setError("Conditional expression not of type bool");
+        }
     }
 
     private ExpressionType getExpressionType(Expression expression) {
