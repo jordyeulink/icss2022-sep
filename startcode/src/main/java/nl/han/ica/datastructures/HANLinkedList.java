@@ -2,8 +2,8 @@ package nl.han.ica.datastructures;
 
 public class HANLinkedList<T> implements IHANLinkedList<T> {
 
-    private Node<T> headNode;
-    private int size;
+    private Node<T> headNode = null;
+    private int size = 0;
 
     @Override
     public void addFirst(T value) {
@@ -25,26 +25,35 @@ public class HANLinkedList<T> implements IHANLinkedList<T> {
             throw new IndexOutOfBoundsException();
         }
 
-        Node<T> currentNode = headNode;
-        for (int i = 0; i < index; i++) {
-            currentNode = currentNode.getNextNode();
-        }
+        if (index == 0 ){
+            addFirst(value);
+        } else {
 
-        Node<T> newNode = new Node<>(value);
-        newNode.setNextNode(currentNode.getNextNode());
-        currentNode.setNextNode(newNode);
-        size++;
+            Node<T> currentNode = headNode;
+            for (int i = 0; i < index; i++) {
+                currentNode = currentNode.getNextNode();
+            }
+
+            Node<T> newNode = new Node<>(value);
+            newNode.setNextNode(currentNode.getNextNode());
+            currentNode.setNextNode(newNode);
+            size++;
+        }
     }
 
     @Override
     public void delete(int pos) {
-        Node<T> previousNode = headNode;
-        for (int i = 0; i < pos -1; i++) {
-            previousNode = previousNode.getNextNode();
-        }
+        if (pos == 0 ){
+            removeFirst();;
+        } else {
+            Node<T> previousNode = headNode;
+            for (int i = 0; i < pos - 1; i++) {
+                previousNode = previousNode.getNextNode();
+            }
 
-        previousNode.setNextNode(previousNode.getNextNode().getNextNode());
-        size--;
+            previousNode.setNextNode(previousNode.getNextNode().getNextNode());
+            size--;
+        }
     }
 
     @Override
