@@ -39,6 +39,7 @@ public class Checker {
 
 
     public void checkStylerule(Stylerule node){
+        variableTypes.insert(variableTypes.getSize(),new HashMap<>());
         for(ASTNode child : node.getChildren()){
             if(child instanceof Declaration){
                 checkDeclaration((Declaration) child);
@@ -46,8 +47,25 @@ public class Checker {
             else if(child instanceof IfClause){
                 checkIfClause((IfClause) child);
             }
+            else if (child instanceof VariableAssignment) {
+                variableTypes.get(variableTypes.getSize() - 1).put(((VariableAssignment) child).name.name, getExpressionType(((VariableAssignment) child).expression));
+            }
 
         }
+        variableTypes.delete(variableTypes.getSize() - 1);
+    }
+
+    private void checkElseClause(ElseClause node) {
+        variableTypes.insert(variableTypes.getSize(),new HashMap<>());
+        for (ASTNode child : node.body){
+            if (child instanceof VariableAssignment) {
+                variableTypes.get(variableTypes.getSize() - 1).put(((VariableAssignment) child).name.name, getExpressionType(((VariableAssignment) child).expression));
+            } else if (child instanceof Declaration) {
+                checkDeclaration((Declaration) child);
+            }
+        }
+        variableTypes.delete(variableTypes.getSize() - 1);
+
     }
 
     public void checkDeclaration(Declaration node){
@@ -62,7 +80,6 @@ public class Checker {
             else if(child instanceof Operation){
                 checkOperation((Operation)child);
             }
-
         }
     }
 
@@ -72,24 +89,32 @@ public class Checker {
 
         if (leftType == ExpressionType.COLOR || rightType == ExpressionType.COLOR) {
             node.setError("Color not allowed");
-        }
-        if (node instanceof MultiplyOperation) {
-            if (leftType != ExpressionType.SCALAR && rightType != ExpressionType.SCALAR) {
-                node.setError("No scalar found in multiplication");
-            }
-        }
-        else if (node instanceof AddOperation) {
-            for (ASTNode child : node.getChildren()) {
-                if (child instanceof Operation) {
-                    checkOperation((Operation) child);
+        } else {
+            if (node instanceof MultiplyOperation) {
+                if (leftType != ExpressionType.SCALAR && rightType != ExpressionType.SCALAR) {
+                    node.setError("No scalar found in multiplication");
                 }
-            }
+                for (ASTNode child : node.getChildren()) {
+                    if (child instanceof VariableReference) {
+                        checkVariableReference((VariableReference) child);
+                    }
+                }
+            } else if (node instanceof AddOperation) {
+                for (ASTNode child : node.getChildren()) {
+                    if (child instanceof Operation) {
+                        checkOperation((Operation) child);
+                    }
+                    if (child instanceof VariableReference) {
+                        checkVariableReference((VariableReference) child);
+                    }
+                }
 
-            ExpressionType effectiveLeft = getEffectiveType(node.lhs);
-            ExpressionType effectiveRight = getEffectiveType(node.rhs);
+                ExpressionType effectiveLeft = getEffectiveType(node.lhs);
+                ExpressionType effectiveRight = getEffectiveType(node.rhs);
 
-            if (effectiveLeft != effectiveRight) {
-                node.setError("Different types in Calculation: " + effectiveLeft + " vs " + effectiveRight);
+                if (effectiveLeft != effectiveRight) {
+                    node.setError("Different types in Calculation: " + effectiveLeft + " vs " + effectiveRight);
+                }
             }
         }
     }
@@ -109,18 +134,60 @@ public class Checker {
     }
 
     private void checkVariableReference(VariableReference node) {
-         ExpressionType expressionType = variableTypes.getFirst().get(node.name);
-         if(expressionType == ExpressionType.UNDEFINED || expressionType == null){
-            node.setError("Variable is not defined");
-         }
+        if(!checkIfVariableInScope(node)){
+                node.setError("Variable not in scope");
+        }
     }
 
     public void checkIfClause(IfClause node){
-        if((node.conditionalExpression instanceof VariableReference
-                && variableTypes.getFirst().get(((VariableReference) node.conditionalExpression).name) != ExpressionType.BOOL)
-                || (!(node.conditionalExpression instanceof VariableReference) && getExpressionType(node.conditionalExpression) != ExpressionType.BOOL)){
-            node.setError("Conditional expression not of type bool");
+        if(node.conditionalExpression instanceof VariableReference){
+            if(checkIfVariableInScope((VariableReference) node.conditionalExpression)){
+                ExpressionType expressionType = GetVariableType(((VariableReference) node.conditionalExpression).name);
+                if (expressionType != ExpressionType.BOOL){
+                    node.setError("Conditional expression not of type bool");
+                }
+            } else {
+                node.conditionalExpression.setError("Variable not in scope");
+            }
+        } else {
+            if(getExpressionType(node.conditionalExpression) != ExpressionType.BOOL){
+                node.setError("Conditional expression not of type bool");
+            }
         }
+        variableTypes.insert(variableTypes.getSize(),new HashMap<>());
+        for (ASTNode child : node.body){
+            if (child instanceof VariableAssignment) {
+                variableTypes.get(variableTypes.getSize() - 1).put(((VariableAssignment) child).name.name, getExpressionType(((VariableAssignment) child).expression));
+            }
+            else if(child instanceof Declaration){
+                checkDeclaration((Declaration) child);
+            } else if (child instanceof IfClause) {
+                System.out.println("test");
+                checkIfClause((IfClause) child);
+            }
+        }
+        variableTypes.delete(variableTypes.getSize() - 1);
+        if(node.elseClause != null){
+            checkElseClause(node.elseClause);
+        }
+    }
+
+    private boolean checkIfVariableInScope(VariableReference node) {
+        for (int index = 0; index < variableTypes.getSize(); index++){
+            if (variableTypes.get(index).get(node.name) != null && variableTypes.get(index).get(node.name) != ExpressionType.UNDEFINED){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ExpressionType GetVariableType(String name) {
+        for (int index = 0; index < variableTypes.getSize(); index++){
+            if (variableTypes.get(index).get(name) != null && variableTypes.get(index).get(name) != ExpressionType.UNDEFINED){
+                return variableTypes.get(index).get(name);
+            }
+        }
+        return null;
     }
 
     private ExpressionType getExpressionType(Expression expression) {

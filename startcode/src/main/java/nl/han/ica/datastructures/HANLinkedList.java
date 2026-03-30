@@ -30,7 +30,7 @@ public class HANLinkedList<T> implements IHANLinkedList<T> {
         } else {
 
             Node<T> currentNode = headNode;
-            for (int i = 0; i < index; i++) {
+            for (int i = 0; i < index - 1; i++) {
                 currentNode = currentNode.getNextNode();
             }
 
@@ -43,15 +43,20 @@ public class HANLinkedList<T> implements IHANLinkedList<T> {
 
     @Override
     public void delete(int pos) {
-        if (pos == 0 ){
-            removeFirst();;
+        if (pos < 0 || pos >= size) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        if (pos == 0) {
+            removeFirst();
         } else {
             Node<T> previousNode = headNode;
             for (int i = 0; i < pos - 1; i++) {
                 previousNode = previousNode.getNextNode();
             }
+            Node<T> nodeToRemove = previousNode.getNextNode();
+            previousNode.setNextNode(nodeToRemove.getNextNode());
 
-            previousNode.setNextNode(previousNode.getNextNode().getNextNode());
             size--;
         }
     }
