@@ -3,10 +3,7 @@ package nl.han.ica.icss.transforms;
 import nl.han.ica.datastructures.HANLinkedList;
 import nl.han.ica.datastructures.IHANLinkedList;
 import nl.han.ica.icss.ast.*;
-import nl.han.ica.icss.ast.literals.BoolLiteral;
-import nl.han.ica.icss.ast.literals.PercentageLiteral;
-import nl.han.ica.icss.ast.literals.PixelLiteral;
-import nl.han.ica.icss.ast.literals.ScalarLiteral;
+import nl.han.ica.icss.ast.literals.*;
 import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
@@ -70,22 +67,136 @@ public class Evaluator implements Transform {
         }
 
         if(conditionalExpression.value){
+            for (int index = 0; index < node.body.size(); index++){
+                ASTNode child = node.body.get(index);
+                if(child instanceof VariableAssignment){
+                    Literal newValue = updateVariable((VariableAssignment) child);
+                    node.body.remove(index);
+                    node.body.add(index, newValue);
+                }
+            }
             return node.body;
         }
         if (node.elseClause != null){
+            for (int index = 0; index < node.elseClause.body.size(); index++){
+                ASTNode child = node.elseClause.body.get(index);
+                if(child instanceof VariableAssignment){
+                    Literal newValue = updateVariable((VariableAssignment) child);
+                    node.elseClause.body.remove(index);
+                    node.elseClause.body.add(index, newValue);
+                }
+            }
             return node.elseClause.body;
         }
         return null;
     }
 
-    private void evaluateDeclaration(Declaration node) {
+    private Literal updateVariable(VariableAssignment node) {
+        Literal newValue = (Literal) evaluate(node.expression);
+        if (variableValues.getFirst().get(node.name.name) != null){
+            variableValues.getFirst().remove(node.name.name);
+        }
+        variableValues.getFirst().put(node.name.name, newValue);
+        return newValue;
+    }
 
+    private void evaluateDeclaration(Declaration node) {
+        if(node.expression instanceof Operation){
+            node.expression = evaluateOperation((Operation) node.expression);
+        }
+    }
+
+    private Literal evaluateOperation(Operation expression) {
+        Literal left = (Literal) evaluate(expression.lhs);
+        Literal right = (Literal) evaluate(expression.rhs);
+
+        ExpressionType resultType = getEffectiveType(expression);
+
+        int lVal = getNumericValue(left);
+        int rVal = getNumericValue(right);
+        int resultValue = 0;
+        if(expression instanceof MultiplyOperation) {
+            resultValue = lVal * rVal;
+        }
+        else if(expression instanceof AddOperation) {
+            resultValue = lVal + rVal;
+        }
+        else if(expression instanceof SubtractOperation) {
+            resultValue = lVal - rVal;
+        }
+
+        switch (resultType) {
+            case PIXEL:      return new PixelLiteral(resultValue);
+            case PERCENTAGE: return new PercentageLiteral(resultValue);
+            case SCALAR:     return new ScalarLiteral(resultValue);
+            default:         return new ScalarLiteral(resultValue);
+        }
+    }
+
+    private ExpressionType getEffectiveType(Expression node) {
+        if (node instanceof MultiplyOperation) {
+            Operation op = (Operation) node;
+            ExpressionType left = getExpressionType(op.lhs);
+            ExpressionType right = getExpressionType(op.rhs);
+
+            return (left == ExpressionType.SCALAR) ? right : left;
+        }
+        return getExpressionType(node);
+    }
+
+    private int getNumericValue(Literal literal) {
+        if (literal instanceof ScalarLiteral) return ((ScalarLiteral) literal).value;
+        if (literal instanceof PixelLiteral) return ((PixelLiteral) literal).value;
+        if (literal instanceof PercentageLiteral) return ((PercentageLiteral) literal).value;
+        return 0;
     }
 
     private void evaluateVariableAssignment(VariableAssignment node) {
-        variableValues.getFirst().put(node.name.name,(Literal) node.expression);
+        Literal value = (Literal) evaluate(node.expression);
+        variableValues.getFirst().put(node.name.name, value);
     }
 
+    private Expression evaluate(Expression expression) {
+        if (expression instanceof Literal) {
+            return expression;
+        }
+        else if (expression instanceof VariableReference) {
+            String varName = ((VariableReference) expression).name;
+            return variableValues.getFirst().get(varName);
+        }
+        else if (expression instanceof Operation) {
+            return evaluateOperation((Operation) expression);
+        }
 
+        return expression;
+    }
+
+    private ExpressionType getExpressionType(Expression expression) {
+        if (expression instanceof PixelLiteral){
+            System.out.println("returned PIXEL");
+            return ExpressionType.PIXEL;
+        }
+        if (expression instanceof ColorLiteral){
+            System.out.println("returned COLOR");
+            return ExpressionType.COLOR;
+        }
+        if (expression instanceof ScalarLiteral){
+            System.out.println("returned SCALAR");
+            return ExpressionType.SCALAR;
+        }
+        if (expression instanceof BoolLiteral){
+            System.out.println("returned BOOL");
+            return ExpressionType.BOOL;
+        }
+        if (expression instanceof PercentageLiteral){
+            System.out.println("returned PERCENTAGE");
+            return ExpressionType.PERCENTAGE;
+        }
+        if (expression instanceof VariableReference){
+            return getExpressionType(variableValues.getFirst().get(((VariableReference) expression).name));
+        }
+        System.out.println("returned UNDEFINED");
+        return ExpressionType.UNDEFINED;
+    }
 
 }

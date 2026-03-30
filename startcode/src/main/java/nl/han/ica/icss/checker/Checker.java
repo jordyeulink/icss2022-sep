@@ -6,6 +6,7 @@ import nl.han.ica.icss.ast.*;
 import nl.han.ica.icss.ast.literals.*;
 import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
+import nl.han.ica.icss.ast.operations.SubtractOperation;
 import nl.han.ica.icss.ast.types.ExpressionType;
 
 import java.util.HashMap;
@@ -99,7 +100,7 @@ public class Checker {
                         checkVariableReference((VariableReference) child);
                     }
                 }
-            } else if (node instanceof AddOperation) {
+            } else if (node instanceof AddOperation || node instanceof SubtractOperation) {
                 for (ASTNode child : node.getChildren()) {
                     if (child instanceof Operation) {
                         checkOperation((Operation) child);
