@@ -3,10 +3,7 @@ package nl.han.ica.icss.checker;
 import nl.han.ica.datastructures.HANLinkedList;
 import nl.han.ica.datastructures.IHANLinkedList;
 import nl.han.ica.icss.ast.*;
-import nl.han.ica.icss.ast.literals.BoolLiteral;
-import nl.han.ica.icss.ast.literals.ColorLiteral;
-import nl.han.ica.icss.ast.literals.PixelLiteral;
-import nl.han.ica.icss.ast.literals.ScalarLiteral;
+import nl.han.ica.icss.ast.literals.*;
 import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.types.ExpressionType;
@@ -70,23 +67,42 @@ public class Checker {
     }
 
     private void checkOperation(Operation node) {
-        if(getExpressionType(node.lhs) == ExpressionType.COLOR && getExpressionType(node.rhs) == ExpressionType.COLOR){
+        ExpressionType leftType = getExpressionType(node.lhs);
+        ExpressionType rightType = getExpressionType(node.rhs);
+
+        if (leftType == ExpressionType.COLOR || rightType == ExpressionType.COLOR) {
             node.setError("Color not allowed");
         }
-        if(node instanceof MultiplyOperation){
-            if(getExpressionType(node.lhs) != ExpressionType.SCALAR && getExpressionType(node.rhs) != ExpressionType.SCALAR){
+        if (node instanceof MultiplyOperation) {
+            if (leftType != ExpressionType.SCALAR && rightType != ExpressionType.SCALAR) {
                 node.setError("No scalar found in multiplication");
             }
-        } else if (node instanceof AddOperation) {
-            for(ASTNode child : node.getChildren()){
-                if(child instanceof MultiplyOperation) {
+        }
+        else if (node instanceof AddOperation) {
+            for (ASTNode child : node.getChildren()) {
+                if (child instanceof Operation) {
                     checkOperation((Operation) child);
                 }
             }
-            if(getExpressionType(node.lhs) != getExpressionType(node.rhs)){
-                node.setError("Different types in Calculation");
+
+            ExpressionType effectiveLeft = getEffectiveType(node.lhs);
+            ExpressionType effectiveRight = getEffectiveType(node.rhs);
+
+            if (effectiveLeft != effectiveRight) {
+                node.setError("Different types in Calculation: " + effectiveLeft + " vs " + effectiveRight);
             }
         }
+    }
+
+    private ExpressionType getEffectiveType(Expression node) {
+        if (node instanceof MultiplyOperation) {
+            Operation op = (Operation) node;
+            ExpressionType left = getExpressionType(op.lhs);
+            ExpressionType right = getExpressionType(op.rhs);
+
+            return (left == ExpressionType.SCALAR) ? right : left;
+        }
+        return getExpressionType(node);
     }
 
     private void checkPropertyName(PropertyName node) {
@@ -123,6 +139,13 @@ public class Checker {
         if (expression instanceof BoolLiteral){
             System.out.println("returned BOOL");
             return ExpressionType.BOOL;
+        }
+        if (expression instanceof PercentageLiteral){
+            System.out.println("returned PERCENTAGE");
+            return ExpressionType.PERCENTAGE;
+        }
+        if (expression instanceof VariableReference){
+            return variableTypes.getFirst().get(((VariableReference) expression).name);
         }
         System.out.println("returned UNDEFINED");
         return ExpressionType.UNDEFINED;

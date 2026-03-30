@@ -277,6 +277,8 @@ public class ASTListener extends ICSSBaseListener {
                 return new BoolLiteral(ctx.TRUE().getText());
             case ICSSParser.FALSE:
                 return new BoolLiteral(ctx.FALSE().getText());
+            case ICSSParser.PERCENTAGE:
+                return new PercentageLiteral(ctx.PERCENTAGE().getText());
             default:
                 throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
         }
@@ -290,6 +292,8 @@ public class ASTListener extends ICSSBaseListener {
                 return new PixelLiteral(ctx.PIXELSIZE().getText());
             case ICSSParser.SCALAR:
                 return new ScalarLiteral(ctx.SCALAR().getText());
+            case ICSSParser.PERCENTAGE:
+                return new PercentageLiteral(ctx.PERCENTAGE().getText());
             default:
                 throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
         }

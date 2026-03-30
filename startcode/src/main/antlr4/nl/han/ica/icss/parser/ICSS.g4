@@ -74,7 +74,8 @@ multiplicationExpr: calculationValue ((multiplicationOperator) calculationValue)
 calculationValue
     : CAPITAL_IDENT
     | PIXELSIZE
-    | SCALAR;
+    | SCALAR
+    | PERCENTAGE;
 
 multiplicationOperator: MUL;
 
@@ -91,5 +92,6 @@ value
     : COLOR
     | PIXELSIZE
     | TRUE
-    | FALSE;
+    | FALSE
+    | PERCENTAGE;
 
