@@ -44,7 +44,9 @@ public class Evaluator implements Transform {
                 evaluateVariableAssignment((VariableAssignment) child);
             }
             else if(child instanceof Declaration){
-                evaluateDeclaration((Declaration) child);
+                Declaration newDeclaration = evaluateDeclaration((Declaration) child);
+                node.body.remove(index);
+                node.body.add(index,newDeclaration);
             }
             else if (child instanceof IfClause) {
                 ArrayList<ASTNode> newBody = evaluateIfClause((IfClause) child);
@@ -74,6 +76,11 @@ public class Evaluator implements Transform {
                     node.body.remove(index);
                     node.body.add(index, newValue);
                 }
+                if(child instanceof Declaration){
+                    Declaration newDeclaration = evaluateDeclaration((Declaration) child);
+                    node.body.remove(index);
+                    node.body.add(index,newDeclaration);
+                }
             }
             return node.body;
         }
@@ -84,6 +91,11 @@ public class Evaluator implements Transform {
                     Literal newValue = updateVariable((VariableAssignment) child);
                     node.elseClause.body.remove(index);
                     node.elseClause.body.add(index, newValue);
+                }
+                if(child instanceof Declaration){
+                    Declaration newDeclaration = evaluateDeclaration((Declaration) child);
+                    node.body.remove(index);
+                    node.body.add(index,newDeclaration);
                 }
             }
             return node.elseClause.body;
@@ -100,10 +112,14 @@ public class Evaluator implements Transform {
         return newValue;
     }
 
-    private void evaluateDeclaration(Declaration node) {
+    private Declaration evaluateDeclaration(Declaration node) {
         if(node.expression instanceof Operation){
             node.expression = evaluateOperation((Operation) node.expression);
         }
+        else if(node.expression instanceof VariableReference){
+            node.expression = (Literal) evaluate(node.expression);
+        }
+        return node;
     }
 
     private Literal evaluateOperation(Operation expression) {
