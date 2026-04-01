@@ -24,16 +24,23 @@ public class Evaluator implements Transform {
     @Override
     public void apply(AST ast) {
         variableValues.addFirst(new HashMap<>());
-        for(ASTNode child : ast.root.getChildren()){
+        for(int index = 0 ; index < ast.root.getChildren().size(); index++){
+            ASTNode child = ast.root.getChildren().get(index);
             if(child instanceof VariableAssignment){
                 evaluateVariableAssignment((VariableAssignment) child);
             }
             else if(child instanceof Stylerule){
                 evaluateStylerule((Stylerule) child);
             }
-
         }
-
+        ArrayList<ASTNode> toRemove = new ArrayList<>();
+        for (ASTNode child : ast.root.getChildren()) {
+            if (child instanceof VariableAssignment) {
+                evaluateVariableAssignment((VariableAssignment) child);
+                toRemove.add(child);
+            }
+        }
+        ast.root.getChildren().removeAll(toRemove);
     }
 
     private void evaluateStylerule(Stylerule node) {
@@ -58,23 +65,29 @@ public class Evaluator implements Transform {
                 }
             }
         }
+        ArrayList<ASTNode> toRemove = new ArrayList<>();
+        for (ASTNode child : node.body) {
+            if (child instanceof VariableAssignment) {
+                evaluateVariableAssignment((VariableAssignment) child);
+                toRemove.add(child);
+            }
+        }
+        node.body.removeAll(toRemove);
     }
 
     private ArrayList<ASTNode> evaluateIfClause(IfClause node) {
         BoolLiteral conditionalExpression = null;
         if(node.conditionalExpression instanceof BoolLiteral) {
-           conditionalExpression = (BoolLiteral) node.conditionalExpression;
+            conditionalExpression = (BoolLiteral) node.conditionalExpression;
         } else if (node.conditionalExpression instanceof VariableReference) {
-           conditionalExpression = (BoolLiteral) variableValues.getFirst().get(((VariableReference) node.conditionalExpression).name);
+            conditionalExpression = (BoolLiteral) variableValues.getFirst().get(((VariableReference) node.conditionalExpression).name);
         }
-
+        System.out.println(node.getNodeLabel());
         if(conditionalExpression.value){
             for (int index = 0; index < node.body.size(); index++){
                 ASTNode child = node.body.get(index);
                 if(child instanceof VariableAssignment){
-                    Literal newValue = updateVariable((VariableAssignment) child);
-                    node.body.remove(index);
-                    node.body.add(index, newValue);
+                    updateVariable((VariableAssignment) child);
                 }
                 if(child instanceof Declaration){
                     Declaration newDeclaration = evaluateDeclaration((Declaration) child);
@@ -82,15 +95,21 @@ public class Evaluator implements Transform {
                     node.body.add(index,newDeclaration);
                 }
             }
+            ArrayList<ASTNode> toRemove = new ArrayList<>();
+            for (ASTNode child : node.body) {
+                if (child instanceof VariableAssignment) {
+                    evaluateVariableAssignment((VariableAssignment) child);
+                    toRemove.add(child);
+                }
+            }
+            node.body.removeAll(toRemove);
             return node.body;
         }
         if (node.elseClause != null){
             for (int index = 0; index < node.elseClause.body.size(); index++){
                 ASTNode child = node.elseClause.body.get(index);
                 if(child instanceof VariableAssignment){
-                    Literal newValue = updateVariable((VariableAssignment) child);
-                    node.elseClause.body.remove(index);
-                    node.elseClause.body.add(index, newValue);
+                    updateVariable((VariableAssignment) child);
                 }
                 if(child instanceof Declaration){
                     Declaration newDeclaration = evaluateDeclaration((Declaration) child);
@@ -98,18 +117,25 @@ public class Evaluator implements Transform {
                     node.body.add(index,newDeclaration);
                 }
             }
+            ArrayList<ASTNode> toRemove = new ArrayList<>();
+            for (ASTNode child : node.body) {
+                if (child instanceof VariableAssignment) {
+                    evaluateVariableAssignment((VariableAssignment) child);
+                    toRemove.add(child);
+                }
+            }
+            node.body.removeAll(toRemove);
             return node.elseClause.body;
         }
         return null;
     }
 
-    private Literal updateVariable(VariableAssignment node) {
+    private void updateVariable(VariableAssignment node) {
         Literal newValue = (Literal) evaluate(node.expression);
         if (variableValues.getFirst().get(node.name.name) != null){
             variableValues.getFirst().remove(node.name.name);
         }
         variableValues.getFirst().put(node.name.name, newValue);
-        return newValue;
     }
 
     private Declaration evaluateDeclaration(Declaration node) {
