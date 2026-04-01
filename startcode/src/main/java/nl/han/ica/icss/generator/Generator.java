@@ -48,7 +48,7 @@ public class Generator {
 	private String getStringFromExpression(Expression expression){
 		String value = "";
 		if (expression instanceof PixelLiteral){
-			value += ((PixelLiteral) expression).value;
+			value += ((PixelLiteral) expression).value + "px";
 		}
 		else if (expression instanceof ColorLiteral){
 			value = ((ColorLiteral) expression).value;
@@ -64,7 +64,7 @@ public class Generator {
 			}
 		}
 		else if (expression instanceof PercentageLiteral){
-			value += ((PercentageLiteral) expression).value;
+			value += ((PercentageLiteral) expression).value + "%";
 		}
 		return value;
 	}

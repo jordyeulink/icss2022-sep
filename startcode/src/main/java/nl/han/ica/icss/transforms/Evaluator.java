@@ -68,7 +68,6 @@ public class Evaluator implements Transform {
         } else if (node.conditionalExpression instanceof VariableReference) {
             conditionalExpression = (BoolLiteral) variableValues.getFirst().get(((VariableReference) node.conditionalExpression).name);
         }
-        System.out.println(node.getNodeLabel());
         if(conditionalExpression.value){
             for (int index = 0; index < node.body.size(); index++){
                 ASTNode child = node.body.get(index);
@@ -155,6 +154,9 @@ public class Evaluator implements Transform {
 
             return (left == ExpressionType.SCALAR) ? right : left;
         }
+        if (node instanceof AddOperation) {
+            return getExpressionType(((AddOperation) node).lhs);
+        }
         return getExpressionType(node);
     }
 
@@ -209,6 +211,7 @@ public class Evaluator implements Transform {
         if (expression instanceof VariableReference){
             return getExpressionType(variableValues.getFirst().get(((VariableReference) expression).name));
         }
+        System.out.println(expression.getNodeLabel());
         System.out.println("returned UNDEFINED");
         return ExpressionType.UNDEFINED;
     }
