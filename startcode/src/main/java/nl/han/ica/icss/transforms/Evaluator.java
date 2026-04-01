@@ -33,14 +33,7 @@ public class Evaluator implements Transform {
                 evaluateStylerule((Stylerule) child);
             }
         }
-        ArrayList<ASTNode> toRemove = new ArrayList<>();
-        for (ASTNode child : ast.root.getChildren()) {
-            if (child instanceof VariableAssignment) {
-                evaluateVariableAssignment((VariableAssignment) child);
-                toRemove.add(child);
-            }
-        }
-        ast.root.getChildren().removeAll(toRemove);
+        removeVariableAssignments(ast.root.getChildren());
     }
 
     private void evaluateStylerule(Stylerule node) {
@@ -65,14 +58,7 @@ public class Evaluator implements Transform {
                 }
             }
         }
-        ArrayList<ASTNode> toRemove = new ArrayList<>();
-        for (ASTNode child : node.body) {
-            if (child instanceof VariableAssignment) {
-                evaluateVariableAssignment((VariableAssignment) child);
-                toRemove.add(child);
-            }
-        }
-        node.body.removeAll(toRemove);
+        removeVariableAssignments(node.body);
     }
 
     private ArrayList<ASTNode> evaluateIfClause(IfClause node) {
@@ -95,14 +81,7 @@ public class Evaluator implements Transform {
                     node.body.add(index,newDeclaration);
                 }
             }
-            ArrayList<ASTNode> toRemove = new ArrayList<>();
-            for (ASTNode child : node.body) {
-                if (child instanceof VariableAssignment) {
-                    evaluateVariableAssignment((VariableAssignment) child);
-                    toRemove.add(child);
-                }
-            }
-            node.body.removeAll(toRemove);
+            removeVariableAssignments(node.body);
             return node.body;
         }
         if (node.elseClause != null){
@@ -117,14 +96,7 @@ public class Evaluator implements Transform {
                     node.body.add(index,newDeclaration);
                 }
             }
-            ArrayList<ASTNode> toRemove = new ArrayList<>();
-            for (ASTNode child : node.body) {
-                if (child instanceof VariableAssignment) {
-                    evaluateVariableAssignment((VariableAssignment) child);
-                    toRemove.add(child);
-                }
-            }
-            node.body.removeAll(toRemove);
+            removeVariableAssignments(node.body);
             return node.elseClause.body;
         }
         return null;
@@ -239,6 +211,17 @@ public class Evaluator implements Transform {
         }
         System.out.println("returned UNDEFINED");
         return ExpressionType.UNDEFINED;
+    }
+
+    private void removeVariableAssignments(ArrayList<ASTNode> nodes) {
+        ArrayList<ASTNode> toRemove = new ArrayList<>();
+        for (ASTNode child : nodes) {
+            if (child instanceof VariableAssignment) {
+                evaluateVariableAssignment((VariableAssignment) child);
+                toRemove.add(child);
+            }
+        }
+        nodes.removeAll(toRemove);
     }
 
 }
