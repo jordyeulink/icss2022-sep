@@ -245,7 +245,11 @@ public class ASTListener extends ICSSBaseListener {
     @Override
     public void enterValue(ICSSParser.ValueContext ctx) {
         System.out.println("Enter Value");
-        if(ctx.getStart().getType() == ICSSParser.CAPITAL_IDENT){
+
+        if (ctx.additionExpr() != null) {
+            return;
+        }
+        if (ctx.getStart().getType() == ICSSParser.CAPITAL_IDENT) {
             currentContainer.peek().addChild(new VariableReference(ctx.CAPITAL_IDENT().getText()));
         } else {
             Literal value = createLiteral(ctx);
