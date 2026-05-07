@@ -245,8 +245,12 @@ public class ASTListener extends ICSSBaseListener {
     @Override
     public void enterValue(ICSSParser.ValueContext ctx) {
         System.out.println("Enter Value");
-        Literal value = createLiteral(ctx);
-        currentContainer.peek().addChild(value);
+        if(ctx.getStart().getType() == ICSSParser.CAPITAL_IDENT){
+            currentContainer.peek().addChild(new VariableReference(ctx.CAPITAL_IDENT().getText()));
+        } else {
+            Literal value = createLiteral(ctx);
+            currentContainer.peek().addChild(value);
+        }
     }
 
     @Override
@@ -279,6 +283,8 @@ public class ASTListener extends ICSSBaseListener {
                 return new BoolLiteral(ctx.FALSE().getText());
             case ICSSParser.PERCENTAGE:
                 return new PercentageLiteral(ctx.PERCENTAGE().getText());
+            case ICSSParser.SCALAR:
+                return new ScalarLiteral(ctx.SCALAR().getText());
             default:
                 throw new IllegalStateException("Unexpected token type: " + ctx.getStart().getType());
         }

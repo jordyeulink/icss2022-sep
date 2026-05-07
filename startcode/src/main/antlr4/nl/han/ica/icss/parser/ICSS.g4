@@ -90,6 +90,9 @@ booleanType
 
 value
     : COLOR
+    | CAPITAL_IDENT
+    | additionExpr
+    | SCALAR
     | PIXELSIZE
     | TRUE
     | FALSE
