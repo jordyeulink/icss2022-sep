@@ -155,6 +155,9 @@ public class ASTListener extends ICSSBaseListener {
         System.out.println("Exit AdditionExpr");
         if (currentContainer.peek() instanceof Operation) {
             currentContainer.pop();
+        } else if (currentContainer.peek() instanceof Expression) {
+            ASTNode value = currentContainer.pop();
+            currentContainer.peek().addChild(value);
         }
     }
 
