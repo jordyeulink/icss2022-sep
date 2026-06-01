@@ -154,8 +154,8 @@ public class Evaluator implements Transform {
 
             return (left == ExpressionType.SCALAR) ? right : left;
         }
-        if (node instanceof AddOperation) {
-            return getExpressionType(((AddOperation) node).lhs);
+        if (node instanceof AddOperation || node instanceof SubtractOperation) {
+            return getExpressionType(((Operation) node).lhs);
         }
         return getExpressionType(node);
     }
@@ -210,6 +210,9 @@ public class Evaluator implements Transform {
         }
         if (expression instanceof VariableReference){
             return getExpressionType(variableValues.getFirst().get(((VariableReference) expression).name));
+        }
+        if (expression instanceof Operation) {
+            return getEffectiveType(expression);
         }
         System.out.println(expression.getNodeLabel());
         System.out.println("returned UNDEFINED");

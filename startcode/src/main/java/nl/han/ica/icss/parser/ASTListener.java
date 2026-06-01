@@ -126,7 +126,7 @@ public class ASTListener extends ICSSBaseListener {
 
     @Override
     public void exitElseClause(ICSSParser.ElseClauseContext ctx) {
-        System.out.println("Exit IfClause");
+        System.out.println("Exit ElseClause");
         currentContainer.pop();
     }
 
@@ -154,8 +154,11 @@ public class ASTListener extends ICSSBaseListener {
     public void exitAdditionExpr(ICSSParser.AdditionExprContext ctx) {
         System.out.println("Exit AdditionExpr");
         if (currentContainer.peek() instanceof Operation) {
-            currentContainer.pop();
-        } else if (currentContainer.peek() instanceof Expression) {
+            while (currentContainer.peek() instanceof Operation) {
+                currentContainer.pop();
+            }
+        }
+        else if (currentContainer.peek() instanceof Expression) {
             ASTNode value = currentContainer.pop();
             currentContainer.peek().addChild(value);
         }
@@ -169,9 +172,6 @@ public class ASTListener extends ICSSBaseListener {
     @Override
     public void exitMultiplicationExpr(ICSSParser.MultiplicationExprContext ctx) {
         System.out.println("Exit MultiplicationExpr");
-        if (currentContainer.peek() instanceof Operation) {
-            currentContainer.pop();
-        }
     }
 
     @Override
@@ -195,12 +195,15 @@ public class ASTListener extends ICSSBaseListener {
         System.out.println("Enter MultiplicationOperator");
         MultiplyOperation operation = new MultiplyOperation();
         ASTNode firstValue;
-        if(currentContainer.peek() instanceof AddOperation){
-            firstValue = ((Operation) currentContainer.peek()).rhs;
-            ((Operation) currentContainer.peek()).rhs = operation;
+        if (currentContainer.peek() instanceof AddOperation || currentContainer.peek() instanceof SubtractOperation) {
+            Operation parentOp = (Operation) currentContainer.peek();
+            firstValue = parentOp.rhs;
+            parentOp.rhs = operation;
+            parentOp.getChildren().remove(firstValue);
         } else {
-            firstValue =currentContainer.pop();
+            firstValue = currentContainer.pop();
         }
+
         operation.addChild(firstValue);
         currentContainer.peek().addChild(operation);
         currentContainer.push(operation);
@@ -233,9 +236,13 @@ public class ASTListener extends ICSSBaseListener {
 
     @Override
     public void enterBooleanType(ICSSParser.BooleanTypeContext ctx) {
-        System.out.println("Exit BooleanType");
-        if(ctx.getStart().getType() == ICSSParser.CAPITAL_IDENT) {
+        System.out.println("Enter BooleanType");
+        if (ctx.getStart().getType() == ICSSParser.CAPITAL_IDENT) {
             currentContainer.peek().addChild(new VariableReference(ctx.CAPITAL_IDENT().getText()));
+        } else if (ctx.TRUE() != null) {
+            currentContainer.peek().addChild(new BoolLiteral(true));
+        } else if (ctx.FALSE() != null) {
+            currentContainer.peek().addChild(new BoolLiteral(false));
         }
     }
 

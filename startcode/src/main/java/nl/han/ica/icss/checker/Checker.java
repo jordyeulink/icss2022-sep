@@ -215,6 +215,14 @@ public class Checker {
         if (expression instanceof VariableReference){
             return variableTypes.getFirst().get(((VariableReference) expression).name);
         }
+        if (expression instanceof  Operation){
+            ExpressionType type = getExpressionType(((Operation) expression).lhs);
+            if(type != ExpressionType.SCALAR){
+                return type;
+            } else {
+                return getExpressionType(((Operation) expression).rhs);
+            }
+        }
         System.out.println("returned UNDEFINED");
         return ExpressionType.UNDEFINED;
     }
